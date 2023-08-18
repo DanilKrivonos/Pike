@@ -10,6 +10,7 @@ from subprocess import call
 from pandas import DataFrame
 from multiprocessing import Process
 from sklearn.decomposition import PCA
+from src.get_pool import run_pool
 from src.get_features import collect_features
 from scipy.spatial.distance import pdist, squareform
 from src.get_good_reads import run_trimming, run_filtering
@@ -114,6 +115,7 @@ def run_barcodes(interval,
                  read_q_score,
                  umap_neighbours,
                  hdbscan_neighbours,
+                 k,
                  visualize,
                  consensus_seq_lim,
                  letter_Q_lim):
@@ -145,11 +147,12 @@ def run_barcodes(interval,
         print(' F E A T U R E S   C O L L E C T I N G ')
         print('=======================================')
 
-        K_MERS_FREQ, GC_CONTENT, READ, READ_ID, LENS, QUALITY = collect_features(path_to_fastq, 
-                                                                                 barcode, 
-                                                                                 usereads, 
-                                                                                 read_q_score) #Features collection
-        
+        K_MERS_FREQ, GC_CONTENT, READ, READ_ID, LENS, QUALITY, BARCODE_ID = collect_features(path_to_fastq, 
+                                                                                             barcode, 
+                                                                                             usereads,
+                                                                                             k, 
+                                                                                             read_q_score) #Features collection
+                    
         #___Staged decomposition_________________________________________________________________________________________________________
         
         print('    C L U S T E R I N G   S T A G E    ')
@@ -166,7 +169,8 @@ def run_barcodes(interval,
         umap_dat = umap_model.fit_transform(pca_data)
         #_______________________________________________________________________________________________________________________________
         
-        RESULT_DICT = {'Read ID' : READ_ID, 
+        RESULT_DICT = {'Read ID' : READ_ID,
+                       'BARCODE' : BARCODE_ID, 
                        '1 UMAP COMPONENT' : umap_dat[:, 0], 
                        '2 UMAP COMPONENT' : umap_dat[:, 1], 
                        'Length' : LENS,
@@ -252,7 +256,6 @@ def run_barcodes(interval,
 
         prepare_output(output, barcode)
 
-
 def miltiprocess_analyze(path_to_fastq, 
                          output,
                          mode,
@@ -266,6 +269,7 @@ def miltiprocess_analyze(path_to_fastq,
                          read_q_score,
                          umap_neighbours,
                          hdbscan_neighbours,
+                         k,
                          visualize,
                          consensus_seq_lim,
                          letter_Q_lim):
@@ -291,6 +295,7 @@ def miltiprocess_analyze(path_to_fastq,
                               read_q_score,
                               umap_neighbours,
                               hdbscan_neighbours,
+                              k,
                               visualize,
                               consensus_seq_lim,
                               letter_Q_lim))
@@ -301,5 +306,20 @@ def miltiprocess_analyze(path_to_fastq,
         [proc.join() for proc in procs]
     
     if mode == 'pool':
-        print('in development ...')
+        run_pool(interval,
+                 path_to_fastq,
+                 output,
+                 usereads,
+                 trim_primer, 
+                 primerF, 
+                 primerR,
+                 minlen, 
+                 maxlen,
+                 read_q_score,
+                 umap_neighbours,
+                 hdbscan_neighbours,
+                 k,
+                 visualize,
+                 consensus_seq_lim,
+                 letter_Q_lim)
     

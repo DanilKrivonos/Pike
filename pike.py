@@ -76,6 +76,10 @@ def main():
                         type=int,
                         help='Number of dots for HDBSCAN (30 by default)',
                         default=30)
+    group4.add_argument('-k',
+                        type=int,
+                        help='k-mer size number (6 by default)',
+                        default=6)
     group4.add_argument('--visualize', 
                         help='Create clustering figure (false by default)',
                         default=False,
@@ -118,6 +122,7 @@ def main():
     #____Clustering parametrs__________________
     umap_neighbours = args.umap_neighbours
     hdbscan_neighbours = args.cluster_size
+    k = args.k
     visualize = args.visualize
     #____Consensus parametrs__________________
     #__________________________________________
@@ -133,7 +138,7 @@ def main():
         print('The output directory already exists!')
 
     #output dir bases
-    os.mkdir(f'{output}/read_processing/')
+    os.mkdir(f'{output}/read_preprocessing/')
     os.mkdir(f'{output}/work_dir/')
     os.mkdir(f'{output}/results/')
     #read processing dir dir bases
@@ -142,8 +147,8 @@ def main():
             print('For trimming, it is necessary to give primer sequences (primerF and primerR)!')
             sys.exit()
 
-        os.mkdir(f'{output}/read_processing/cutadapt_round1')
-        os.mkdir(f'{output}/read_processing/cutadapt_round2')
+        os.mkdir(f'{output}/read_preprocessing/cutadapt_round1')
+        os.mkdir(f'{output}/read_preprocessing/cutadapt_round2')
 
     os.mkdir(f'{output}/read_processing/filtered_reads')    
 
@@ -163,6 +168,7 @@ def main():
                          read_q_score,
                          umap_neighbours,
                          hdbscan_neighbours,
+                         k,
                          visualize,
                          consensus_seq_lim,
                          letter_Q_lim)

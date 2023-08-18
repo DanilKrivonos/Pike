@@ -55,6 +55,7 @@ def get_kmers_signature(seq, k=6):
 def collect_features(path_to_fastq, 
                      barcode, 
                      usereads, 
+                     k,
                      median_Q_lim):
 
     open_fastq = parse(f'{path_to_fastq}/{barcode}.fastq' , 'fastq')
@@ -65,6 +66,7 @@ def collect_features(path_to_fastq,
     READ_ID = []
     LENS = []
     QUALITY = []
+    BARCODE_ID = [] #For pool mode
     read_counter = 0
     Q_have = 0
     
@@ -81,15 +83,18 @@ def collect_features(path_to_fastq,
             continue
             
         GC_count = str(seq.seq).count('G') + str(seq.seq).count('C')
-        K_MERS_FREQ.append(list(get_kmers_signature(seq.seq, k=6).values()))
+        K_MERS_FREQ.append(list(get_kmers_signature(seq.seq, k=k).values()))
         GC_CONTENT.append(GC_count/ len(seq.seq))
         READ.append(seq)
         READ_ID.append(seq.id)
         LENS.append(len(seq.seq))
         QUALITY.append(median_Q_score)
+        BARCODE_ID.append(barcode)
         Q_have += 1
     #_____________________________________________________________________________________
     print(f'{np.round((1-Q_have/read_counter)*100)}% or reads was dropped') #Добавить log
     print(f'Will be used {len(K_MERS_FREQ)}')
     
-    return K_MERS_FREQ, GC_CONTENT, READ, READ_ID, LENS, QUALITY
+    return K_MERS_FREQ, GC_CONTENT, READ, READ_ID, LENS, QUALITY, BARCODE_ID
+
+        

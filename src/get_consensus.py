@@ -79,7 +79,7 @@ def get_consensus(consensus_possitions,
 
 
 def medaka_run(output, barcode):
-
+    
     for cluster in listdir(f'{output}/work_dir/{barcode}/clusters_data_fastq/'):
         
         cluster = cluster.split('.')[0]
