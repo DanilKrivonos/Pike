@@ -1,8 +1,5 @@
 import os
-import random
 import numpy as np
-import seaborn as sns
-import matplotlib.pyplot as plt
 from os import listdir
 from umap import UMAP
 from hdbscan import HDBSCAN
@@ -10,9 +7,10 @@ from subprocess import call
 from pandas import DataFrame
 from multiprocessing import Process
 from sklearn.decomposition import PCA
-from src.get_pool import run_pool
+from src.get_pool import create_pool_dirs, collect_pool_features, run_pool
 from src.get_features import collect_features
-from scipy.spatial.distance import pdist, squareform
+from src.get_visualization import get_visualisation
+from src.get_filtered_clusters import filter_cluster
 from src.get_good_reads import run_trimming, run_filtering
 from src.get_consensus import get_msa_info, get_consensus, medaka_run, prepare_output
 
@@ -27,81 +25,6 @@ def create_dirs(output,
     os.mkdir(f'{output}/work_dir/{barcode}/clusters_data_fasta')
     os.mkdir(f'{output}/work_dir/{barcode}/msa')
     os.mkdir(f'{output}/work_dir/{barcode}/medaka')
-
-
-def filter_cluster(clt_dat):
-    
-    #_____________FILTERING_BY_LENGTH_____________________________________
-    median = np.median(clt_dat['Length'].values)
-    st_div = np.std(clt_dat['Length'].values)
-    left = median - 10
-    right = median + 10
-    filtered_data = clt_dat[clt_dat['Length'] > left]
-    filtered_data = filtered_data[filtered_data['Length'] < right]
-    #_____________________________________________________________________
-    #_______________FILTERING_BY_GC_______________________________________
-    median = np.median(clt_dat['GC content'].values)
-    st_div = np.std(clt_dat['GC content'].values)
-    left = median - 2*st_div
-    right = median + 2*st_div
-    filtered_data = filtered_data[filtered_data['GC content'] > left]
-    filtered_data = filtered_data[filtered_data['GC content'] < right]
-    #_____________________________________________________________________
-    
-    return  filtered_data
-
-def get_color(tax_list):
-    
-    color = ''
-    
-    while color not in tax_list.values() and color == '':
-        
-        color = "#"+''.join([random.choice('0123456789ABCDEF') for j in range(6)])
-    
-    return color
-
-def get_visualisation(output, 
-                      barcode, 
-                      filtered_add):
-
-    fig, axs = plt.subplots(figsize=(10, 10))
-    colordict = {}
-    
-    for clt in filtered_add.keys():
-        
-        mean_dists = np.median(squareform(pdist(filtered_add[clt][['1 UMAP COMPONENT', '2 UMAP COMPONENT']].values), 'braucyrtis'), axis=1)
-        ref_idx = filtered_add[clt][mean_dists == np.min(mean_dists)].index[0]
-
-        #____Looking for cluster centroids for figure______
-        x =  filtered_add[clt].loc[ref_idx]['1 UMAP COMPONENT']
-        y = filtered_add[clt].loc[ref_idx]['2 UMAP COMPONENT']
-        colordict[clt] = get_color(colordict)
-        
-        plt.text(x, y, 
-                 f'Cluster {clt}', 
-                 fontsize=3, 
-                 fontweight='book')
-        sns.scatterplot(data=filtered_add[clt], 
-                        x='1 UMAP COMPONENT', 
-                        y='2 UMAP COMPONENT', 
-                        s=1,
-                        alpha=.3,
-                        color=colordict[clt],
-                        ax=axs)
-        sns.scatterplot(data=filtered_add[clt], 
-                        x='1 UMAP COMPONENT', 
-                        y='2 UMAP COMPONENT', 
-                        s=3,
-                        alpha=.7,
-                        color=colordict[clt],
-                        ax=axs)
-    #sns.despine(offset=10, trim=True)
-    plt.xlabel('1 UMAP COMPONENT', fontweight='book')
-    plt.ylabel('2 UMAP COMPONENT', fontweight='book')
-    plt.grid()
-    plt.legend([],[], frameon=False)
-    plt.savefig(f'{output}/{barcode}/reults/{barcode}.pdf')
-    plt.savefig(f'{output}/{barcode}/reults/{barcode}.pdf', dpi=800)
 
 def run_barcodes(interval,
                  path_to_fastq,
@@ -306,20 +229,33 @@ def miltiprocess_analyze(path_to_fastq,
         [proc.join() for proc in procs]
     
     if mode == 'pool':
-        run_pool(interval,
-                 path_to_fastq,
-                 output,
-                 usereads,
-                 trim_primer, 
-                 primerF, 
-                 primerR,
-                 minlen, 
-                 maxlen,
-                 read_q_score,
+        
+        create_pool_dirs(output)
+
+        for interval in intervals:
+            
+            proc = Process(target=collect_pool_features, 
+                        args=(interval,
+                              path_to_fastq,
+                              output,
+                              usereads,
+                              k,
+                              trim_primer, 
+                              primerF, 
+                              primerR,
+                              minlen, 
+                              maxlen,
+                              read_q_score))
+            proc.daemon = True
+            procs.append(proc)
+            proc.start()
+        
+        [proc.join() for proc in procs]
+            
+        run_pool(output,
                  umap_neighbours,
                  hdbscan_neighbours,
-                 k,
                  visualize,
                  consensus_seq_lim,
                  letter_Q_lim)
-    
+        

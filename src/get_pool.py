@@ -7,16 +7,16 @@ from subprocess import call
 from sklearn.decomposition import PCA
 from pandas import DataFrame, read_csv
 from Bio.SeqIO import parse
+from Bio.SeqRecord import SeqRecord
 from src.get_features import collect_features
+from src.get_visualization import get_visualisation
+from src.get_filtered_clusters import filter_cluster
 from src.get_consensus import get_msa_info, get_consensus, medaka_run
 from src.get_good_reads import run_trimming, run_filtering
-from src.get_cluster import filter_cluster, get_visualisation
 
-def create_dirs(output):
+def create_pool_dirs(output):
 
     #workdir dir bases
-    os.mkdir(f'{output}/work_dir/')
-    os.mkdir(f'{output}/results/')
     os.mkdir(f'{output}/work_dir/features')
     os.mkdir(f'{output}/work_dir/proto_consensus')
     os.mkdir(f'{output}/work_dir/clusters_data_fastq')
@@ -39,9 +39,7 @@ def collect_pool_features(interval,
     for barcode in interval:
         
         barcode = barcode.replace('.fastq', '')
-        
-        create_dirs(output, barcode) #creating and removing directoryes
-        
+            
         print(' R E A D S   P R E P R O C E S S I N G ')
         print('=======================================')
 
@@ -68,7 +66,7 @@ def collect_pool_features(interval,
                                                                                              usereads, 
                                                                                              k,
                                                                                              read_q_score) #Features collection
-        save_csv = DataFrame({'K_MERS_FREQ' : K_MERS_FREQ,
+        save_tsv = DataFrame({'K_MERS_FREQ' : K_MERS_FREQ,
                               'GC_CONTENT' : GC_CONTENT, 
                               'READ' : READ,
                               'READ_ID' : READ_ID,
@@ -77,36 +75,15 @@ def collect_pool_features(interval,
                               'BARCODE_ID' : BARCODE_ID
                               })
 
-        save_csv.to_csv(f'{output}/work_dir/features/{barcode}.csv')
+        save_tsv.to_csv(f'{output}/work_dir/features/{barcode}.tsv', sep='\t')
         
-def run_pool(interval,
-             path_to_fastq,
-             output,
-             usereads,
-             trim_primer, 
-             primerF, 
-             primerR,
-             minlen, 
-             maxlen,
-             read_q_score,
+def run_pool(output,
              umap_neighbours,
              hdbscan_neighbours,
-             k,
              visualize,
              consensus_seq_lim,
              letter_Q_lim):
     
-    collect_pool_features(interval,
-                          path_to_fastq,
-                          output,
-                          usereads,
-                          k,
-                          trim_primer, 
-                          primerF, 
-                          primerR,
-                          minlen, 
-                          maxlen,
-                          read_q_score)
     K_MERS_FREQ = [] 
     GC_CONTENT = []
     READ = []
@@ -115,13 +92,13 @@ def run_pool(interval,
     QUALITY = []
     BARCODE_ID = []
     #Barcodes features mearging
-    for barcode in listdir(f'{output}/work_dir/features/'):
+    for barcode_tsv in listdir(f'{output}/work_dir/features/'):
 
-        opn_barcode_features = read_csv(f'{output}/work_dir/features/{barcode}.csv')
-
-        K_MERS_FREQ.extend(list(opn_barcode_features['K_MERS_FREQ'].values))
+        opn_barcode_features = read_csv(f'{output}/work_dir/features/{barcode_tsv}', sep='\t', index_col=0)
+        
+        K_MERS_FREQ.extend([eval(read) for read in opn_barcode_features['K_MERS_FREQ'].values])
         GC_CONTENT.extend(list(opn_barcode_features['GC_CONTENT'].values))
-        READ.extend(list(opn_barcode_features['READ'].values))
+        READ.extend([SeqRecord(read) for read in opn_barcode_features['READ'].values])
         READ_ID.extend(list(opn_barcode_features['READ_ID'].values))
         LENS.extend(list(opn_barcode_features['LENS'].values))
         QUALITY.extend(list(opn_barcode_features['QUALITY'].values))

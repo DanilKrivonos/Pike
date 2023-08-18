@@ -150,7 +150,7 @@ def main():
         os.mkdir(f'{output}/read_preprocessing/cutadapt_round1')
         os.mkdir(f'{output}/read_preprocessing/cutadapt_round2')
 
-    os.mkdir(f'{output}/read_processing/filtered_reads')    
+    os.mkdir(f'{output}/read_preprocessing/filtered_reads')    
 
     print('        R U N   A N A L Y S I S        ')
     print('=======================================')
