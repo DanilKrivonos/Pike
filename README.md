@@ -55,9 +55,10 @@ consensus building arguments:
 ```
 
 ### **Single mode:**
+pike.py -mode single -fastq example_data/ --trim_primer  -primerF CCTACGGGNGGCWGCAG -primerR GACTACHVGGGTATCTAATCC
 
 ### **Pool mode:**
-
+ pike.py -mode pool -fastq example_data/ --trim_primer  -primerF CCTACGGGNGGCWGCAG -primerR GACTACHVGGGTATCTAATCC
 
 
 ### Output directory architecture
