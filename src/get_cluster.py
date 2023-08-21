@@ -70,7 +70,7 @@ def run_barcodes(interval,
         print(' F E A T U R E S   C O L L E C T I N G ')
         print('=======================================')
 
-        K_MERS_FREQ, GC_CONTENT, READ, READ_ID, LENS, QUALITY, BARCODE_ID = collect_features(path_to_fastq, 
+        K_MERS_FREQ, GC_CONTENT, READ_ID, READ_Seq, READ_Q, LENS, QUALITY, BARCODE_ID = collect_features(path_to_fastq, 
                                                                                              barcode, 
                                                                                              usereads,
                                                                                              k, 
@@ -97,7 +97,8 @@ def run_barcodes(interval,
                        '1 UMAP COMPONENT' : umap_dat[:, 0], 
                        '2 UMAP COMPONENT' : umap_dat[:, 1], 
                        'Length' : LENS,
-                       'fastq' : READ,
+                       'READ_Q' : READ_Q,
+                       'READ_Seq' : READ_Seq, 
                        'GC content' : GC_CONTENT,
                        'QUALITY' : QUALITY,
                        'K-mers signature' : K_MERS_FREQ}
@@ -137,10 +138,11 @@ def run_barcodes(interval,
             
             for idx in filtered_data.index:
 
-                read_record = filtered_data.fastq[idx]
-                clt_fastq.write(read_record.format('fastq')) #fastq recording
-                quality_dict[read_record.id] = [i for i in read_record.format('fastq').split('\n')[3]] #letter quality adding
-                clt_fasta.write(f'>{read_record.id}\n{read_record.seq}\n') #fasta recording
+                read_record = f'@{filtered_data["Read ID"][idx]}\n{filtered_data["READ_Seq"][idx]}\n+\n{filtered_data["READ_Q"][idx]}\n'
+                fasta_record = f'>{filtered_data["Read ID"][idx]}\n{filtered_data["READ_Seq"][idx]}\n'
+                clt_fastq.write(read_record) #fastq recording
+                quality_dict[filtered_data["Read ID"][idx]] = [i for i in RESULT_DF['READ_Q'][idx]] #letter quality adding
+                clt_fasta.write(fasta_record) #fasta recording
             
             clt_fastq.close()
             clt_fasta.close()
@@ -253,6 +255,7 @@ def miltiprocess_analyze(path_to_fastq,
         [proc.join() for proc in procs]
             
         run_pool(output,
+                 threads,
                  umap_neighbours,
                  hdbscan_neighbours,
                  visualize,

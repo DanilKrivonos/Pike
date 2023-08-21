@@ -78,7 +78,7 @@ def get_consensus(consensus_possitions,
     return protoconsensus
 
 
-def medaka_run(output, barcode):
+def medaka_run(output, barcode, threads=1):
     
     for cluster in listdir(f'{output}/work_dir/{barcode}/clusters_data_fastq/'):
         
@@ -86,7 +86,7 @@ def medaka_run(output, barcode):
         reads = f'{output}/work_dir/{barcode}/clusters_data_fastq/{cluster}.fastq'
         protoconsensus = f'{output}/work_dir/{barcode}/proto_consensus/{cluster}.fasta'
         out_dir = f'{output}/work_dir/{barcode}/medaka/{cluster}'
-        command = f'medaka_consensus -i {reads} -d {protoconsensus} -o {out_dir}'
+        command = f'medaka_consensus -t {threads} -i {reads} -d {protoconsensus} -o {out_dir}'
         call(command, shell=True)
 
 def prepare_output(output, barcode):

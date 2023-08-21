@@ -61,23 +61,55 @@ def collect_pool_features(interval,
         print(' F E A T U R E S   C O L L E C T I N G ')
         print('=======================================')
 
-        K_MERS_FREQ, GC_CONTENT, READ, READ_ID, LENS, QUALITY, BARCODE_ID = collect_features(path_to_fastq, 
+        K_MERS_FREQ, GC_CONTENT, READ_ID, READ_Seq, READ_Q, LENS, QUALITY, BARCODE_ID = collect_features(path_to_fastq, 
                                                                                              barcode, 
                                                                                              usereads, 
                                                                                              k,
                                                                                              read_q_score) #Features collection
-        save_tsv = DataFrame({'K_MERS_FREQ' : K_MERS_FREQ,
-                              'GC_CONTENT' : GC_CONTENT, 
-                              'READ' : READ,
-                              'READ_ID' : READ_ID,
-                              'LENS' : LENS, 
-                              'QUALITY' : QUALITY, 
-                              'BARCODE_ID' : BARCODE_ID
-                              })
+        save_tsv = DataFrame({'Read ID' : READ_ID,
+                              'BARCODE' : BARCODE_ID, 
+                              'Length' : LENS,
+                              'READ_Q' : READ_Q,
+                              'READ_Seq' : READ_Seq, 
+                              'GC content' : GC_CONTENT,
+                              'QUALITY' : QUALITY,
+                              'K-mers signature' : K_MERS_FREQ})
 
         save_tsv.to_csv(f'{output}/work_dir/features/{barcode}.tsv', sep='\t')
+
+def demultiplex_results(output):
         
+    print('  O U T P U T   P R E P A R A T I O N  ')
+    print('=======================================')
+
+    otu_decoder = {}
+    good_clt_list = []
+
+    for clt in listdir(f'{output}/work_dir/medaka/'):
+
+        good_clt_list.append(int(clt))
+        opn_consensus = parse(f'{output}/work_dir/medaka/{clt}/consensus.fasta', 'fasta')
+
+        for line in opn_consensus:
+            
+            otu_decoder[int(clt)] = line.seq
+    
+    metadata_df = read_csv(f'{output}/work_dir/metadata_df.tsv', sep='\t', index_col=0)
+    metadata_df = metadata_df.loc[metadata_df['Clusters'].isin(good_clt_list)]
+
+    for barcode in metadata_df['BARCODE'].unique():
+
+        os.mkdir(f'{output}/results/{barcode}')
+
+        barcode_df = metadata_df[metadata_df['BARCODE'] == barcode]
+        representation = barcode_df.value_counts('Clusters').to_dict()
+        barcode_results_dict = {otu_decoder[clt] : {'Count' : representation[clt]} for clt in representation.keys()}
+        barcode_results = DataFrame(barcode_results_dict).T
+        barcode_results.to_csv(f'{output}/results/{barcode}/results.tsv', sep='\t')
+
+
 def run_pool(output,
+             threads,
              umap_neighbours,
              hdbscan_neighbours,
              visualize,
@@ -86,7 +118,8 @@ def run_pool(output,
     
     K_MERS_FREQ = [] 
     GC_CONTENT = []
-    READ = []
+    READ_Q = []
+    READ_Seq = []
     READ_ID =[] 
     LENS = []
     QUALITY = []
@@ -96,13 +129,14 @@ def run_pool(output,
 
         opn_barcode_features = read_csv(f'{output}/work_dir/features/{barcode_tsv}', sep='\t', index_col=0)
         
-        K_MERS_FREQ.extend([eval(read) for read in opn_barcode_features['K_MERS_FREQ'].values])
-        GC_CONTENT.extend(list(opn_barcode_features['GC_CONTENT'].values))
-        READ.extend([SeqRecord(read) for read in opn_barcode_features['READ'].values])
-        READ_ID.extend(list(opn_barcode_features['READ_ID'].values))
-        LENS.extend(list(opn_barcode_features['LENS'].values))
+        K_MERS_FREQ.extend([eval(read) for read in opn_barcode_features['K-mers signature'].values])
+        GC_CONTENT.extend(list(opn_barcode_features['GC content'].values))
+        READ_Q.extend(list(opn_barcode_features['READ_Q'].values))
+        READ_Seq.extend(list(opn_barcode_features['READ_Seq'].values))
+        READ_ID.extend(list(opn_barcode_features['Read ID'].values))
+        LENS.extend(list(opn_barcode_features['Length'].values))
         QUALITY.extend(list(opn_barcode_features['QUALITY'].values))
-        BARCODE_ID.extend(list(opn_barcode_features['BARCODE_ID'].values))
+        BARCODE_ID.extend(list(opn_barcode_features['BARCODE'].values))
 
     #___Staged decomposition_________________________________________________________________________________________________________
         
@@ -121,14 +155,15 @@ def run_pool(output,
     #_______________________________________________________________________________________________________________________________
     
     RESULT_DICT = {'Read ID' : READ_ID,
-                   'BARCODE' : BARCODE_ID, 
-                   '1 UMAP COMPONENT' : umap_dat[:, 0], 
-                   '2 UMAP COMPONENT' : umap_dat[:, 1], 
-                   'Length' : LENS,
-                   'fastq' : READ,
-                   'GC content' : GC_CONTENT,
-                   'QUALITY' : QUALITY,
-                   'K-mers signature' : K_MERS_FREQ}
+                    'BARCODE' : BARCODE_ID, 
+                    '1 UMAP COMPONENT' : umap_dat[:, 0], 
+                    '2 UMAP COMPONENT' : umap_dat[:, 1], 
+                    'Length' : LENS,
+                    'READ_Q' : READ_Q,
+                    'READ_Seq' : READ_Seq, 
+                    'GC content' : GC_CONTENT,
+                    'QUALITY' : QUALITY,
+                    'K-mers signature' : K_MERS_FREQ}
     RESULT_DF = DataFrame(RESULT_DICT) #All information mearged in df
 
     #___Cluster identification________________________________________________________________________________________________________
@@ -165,10 +200,11 @@ def run_pool(output,
         
         for idx in filtered_data.index:
 
-            read_record = filtered_data.fastq[idx]
-            clt_fastq.write(read_record.format('fastq')) #fastq recording
-            quality_dict[read_record.id] = [i for i in read_record.format('fastq').split('\n')[3]] #letter quality adding
-            clt_fasta.write(f'>{read_record.id}\n{read_record.seq}\n') #fasta recording
+            read_record = f'@{filtered_data["Read ID"][idx]}\n{filtered_data["READ_Seq"][idx]}\n+\n{filtered_data["READ_Q"][idx]}\n'
+            fasta_record = f'>{filtered_data["Read ID"][idx]}\n{filtered_data["READ_Seq"][idx]}\n'
+            clt_fastq.write(read_record) #fastq recording
+            quality_dict[filtered_data["Read ID"][idx]] = [i for i in RESULT_DF['READ_Q'][idx]] #letter quality adding
+            clt_fasta.write(fasta_record) #fasta recording
         
         clt_fastq.close()
         clt_fasta.close()
@@ -176,9 +212,9 @@ def run_pool(output,
         
         #_______Cluster Consensus Building______________________________________________________________________________________________
                 
-        call(f'mafft --quiet {output}/work_dir/clusters_data_fasta/{clt}.fasta > {output}/work_dir/msa/{clt}.msa', shell=True)
+        call(f'mafft --thread {threads} --quiet {output}/work_dir/clusters_data_fasta/{clt}.fasta > {output}/work_dir/msa/{clt}.msa', shell=True)
         consensus_possitions, possitional_Q_distributions = get_msa_info(output, 
-                                                                         barcode, 
+                                                                         '/', 
                                                                          clt, 
                                                                          quality_dict) #MSA info collection
         protoconsensus = get_consensus(consensus_possitions, 
@@ -194,40 +230,12 @@ def run_pool(output,
         
         if visualize == True:
             
-            get_visualisation(output, barcode, filtered_add)
+            get_visualisation(output, '/', filtered_add)
     #_______________________________________________________________________________________________________________________________
     
     print('    P O L I S H   C O N S E N S U S    ')
     print('=======================================')
     
-    medaka_run(output, '/')
+    medaka_run(output, '/', threads)
     #demultiplex by barcodes
     demultiplex_results(output)
-
-def demultiplex_results(output):
-        
-    print('  O U T P U T   P R E P A R A T I O N  ')
-    print('=======================================')
-
-    otu_decoder = {}
-
-    for clt in listdir(f'{output}/work_dir/medaka/'):
-
-        opn_consensus = parse(f'{output}/work_dir/medaka/{clt}/consensus.fasta', 'fasta')
-
-        for line in opn_consensus:
-            
-            otu_decoder[clt] = line.seq
-    
-    metadata_df = read_csv(f'{output}/work_dir/metadata_df.tsv', sep='\t')
-
-    for barcode in metadata_df['BARCODE'].unique():
-
-        os.mkdir(f'{output}/results/{barcode}')
-
-        barcode_df = metadata_df[metadata_df['BARCODE'] == barcode]
-        representation = barcode_df['Clusters'].value_counts('Length').to_dict()
-
-        barcode_results = DataFrame({otu_decoder[clt] : representation[clt] for clt in representation.keys()})
-        barcode_results.to_csv(f'{output}/results/{barcode}/results.tsv', sep='\t')
-
