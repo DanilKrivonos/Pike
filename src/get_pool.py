@@ -53,7 +53,7 @@ def collect_pool_features(interval,
                                          output, 
                                          primerF, 
                                          primerR)
-        print(barcode_path)
+
         barcode_path = run_filtering(barcode_path, 
                                       barcode, 
                                       output, 
@@ -63,7 +63,7 @@ def collect_pool_features(interval,
 
         print(' F E A T U R E S   C O L L E C T I N G ')
         print('=======================================')
-        print(barcode_path)
+
         K_MERS_FREQ, GC_CONTENT, READ_ID, READ_Seq, READ_Q, LENS, QUALITY, BARCODE_ID = collect_features(barcode_path, 
                                                                                                          barcode, 
                                                                                                          usereads, 
