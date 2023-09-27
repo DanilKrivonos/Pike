@@ -31,7 +31,7 @@ def normalize(kmers):
 
 def get_kmers_signature(seq, k=6):
     
-    kmers = {"".join(kmer) : 0 for kmer in list(product("AGTC", repeat=k))}
+    kmers = {"".join(kmer) : 0 for kmer in list(product("AGTCN", repeat=k))}
     step = 1
     start = 0
     end = k
@@ -94,6 +94,7 @@ def collect_features(path_to_fastq,
         BARCODE_ID.append(barcode)
         Q_have += 1
     #_____________________________________________________________________________________
+    print(barcode)
     print(f'{np.round((1-Q_have/read_counter)*100)}% or reads was dropped') #Добавить log
     print(f'Will be used {len(K_MERS_FREQ)}')
     

@@ -152,8 +152,8 @@ def main():
 
     os.mkdir(f'{output}/read_preprocessing/filtered_reads')    
 
-    print('        R U N   A N A L Y S I S        ')
-    print('=======================================')
+    print('                      R U N   A N A L Y S I S                      ')
+    print('===================================================================')
 
     miltiprocess_analyze(path_to_fastq, 
                          output,

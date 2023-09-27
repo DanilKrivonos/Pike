@@ -35,9 +35,12 @@ def collect_pool_features(interval,
                           minlen, 
                           maxlen,
                           read_q_score):
-                    
+    
+    
     for barcode in interval:
         
+        barcode_path = path_to_fastq
+
         barcode = barcode.replace('.fastq', '')
             
         print(' R E A D S   P R E P R O C E S S I N G ')
@@ -45,13 +48,13 @@ def collect_pool_features(interval,
 
         if trim_primer == True:
     
-            path_to_fastq = run_trimming(path_to_fastq, 
+            barcode_path = run_trimming(barcode_path, 
                                          barcode, 
                                          output, 
                                          primerF, 
                                          primerR)
-
-        path_to_fastq = run_filtering(path_to_fastq, 
+        print(barcode_path)
+        barcode_path = run_filtering(barcode_path, 
                                       barcode, 
                                       output, 
                                       minlen, 
@@ -60,12 +63,12 @@ def collect_pool_features(interval,
 
         print(' F E A T U R E S   C O L L E C T I N G ')
         print('=======================================')
-
-        K_MERS_FREQ, GC_CONTENT, READ_ID, READ_Seq, READ_Q, LENS, QUALITY, BARCODE_ID = collect_features(path_to_fastq, 
-                                                                                             barcode, 
-                                                                                             usereads, 
-                                                                                             k,
-                                                                                             read_q_score) #Features collection
+        print(barcode_path)
+        K_MERS_FREQ, GC_CONTENT, READ_ID, READ_Seq, READ_Q, LENS, QUALITY, BARCODE_ID = collect_features(barcode_path, 
+                                                                                                         barcode, 
+                                                                                                         usereads, 
+                                                                                                         k,
+                                                                                                         read_q_score) #Features collection
         save_tsv = DataFrame({'Read ID' : READ_ID,
                               'BARCODE' : BARCODE_ID, 
                               'Length' : LENS,

@@ -54,5 +54,5 @@ def get_visualisation(output,
     plt.ylabel('2 UMAP COMPONENT', fontweight='book')
     plt.grid()
     plt.legend([],[], frameon=False)
-    plt.savefig(f'{output}/{barcode}/reults/{barcode}.pdf')
-    plt.savefig(f'{output}/{barcode}/reults/{barcode}.pdf', dpi=800)
+    plt.savefig(f'{output}/results/{barcode}/{barcode}.pdf')
+    plt.savefig(f'{output}/results/{barcode}/{barcode}.png', dpi=800)
