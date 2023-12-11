@@ -18,37 +18,32 @@ def compress_read(cutted_seq):
         
     return new_seq 
 
-
-def normalize(kmers):
-    
-    norm = sum(list(kmers.values()))
-    
-    for kmer in kmers.keys():
-        
-        kmers[kmer] = kmers[kmer]/ norm
-    
-    return kmers   
-
 def get_kmers_signature(seq, k=6):
     
     kmers = {"".join(kmer) : 0 for kmer in list(product("AGTCN", repeat=k))}
-    step = 1
-    start = 0
-    end = k
-    reverse_seq = compress_read(seq.reverse_complement())
-    foraverd_seq = compress_read(seq)
-    
-    while end != len(foraverd_seq) - 1:
-        
-        subseq = seq[start: end]         
-        kmers[subseq] += 1
-        
-        revers_subseq = reverse_seq[start: end]
-        kmers[revers_subseq] += 1
-        
-        start, end = start + step, end + step
+ #   step = 1
+  #  start = 0
+  #  end = k
+   # reverse_seq = compress_read(seq.reverse_complement())
+    forward_seq = compress_read(seq)
+    #limit = len(forward_seq) - 1
 
-    kmers = normalize(kmers)
+    for start in  range(len(forward_seq) - k):
+
+        end = start + k
+        subseq = forward_seq[start: end]
+        kmers[subseq] += 1
+    #    revers_subseq = reverse_seq[start: end]
+    #    kmers[revers_subseq] += 1
+    #while end != limit:
+        
+     #   subseq = forward_seq[start: end]         
+     #   kmers[subseq] += 1
+        
+     #   revers_subseq = reverse_seq[start: end]
+     #   kmers[revers_subseq] += 1
+        
+      #  start, end = start + step, end + step
     
     return kmers
 

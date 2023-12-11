@@ -33,7 +33,6 @@ def run_filtering(path_to_fastq,
     command_input = f'{path_to_fastq}/{sample}.fastq'
     command_output = f'{output}/read_preprocessing/filtered_reads/{sample}.fastq'
     command = f'filtlong --min_length {minlen} --max_length {maxlen} --mean_q_weight {read_q_score} {command_input} > {command_output}'
-    print(command)
     call(command, shell=True)
     #new path to preprocessed fastq
     goodreads = f'{output}/read_preprocessing/filtered_reads/'

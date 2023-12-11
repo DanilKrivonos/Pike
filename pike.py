@@ -89,7 +89,7 @@ def main():
     group5.add_argument('-consensus_seq_lim',
                         type=int,
                         help='Minimum number of reads supporting consensus sequence',
-                        default=5)
+                        default=20)
     group5.add_argument('-letter_Q_lim',
                         type=int,
                         help='The minimum quality of the consensus letter. If the quality is less, then N is set (15 by default)',

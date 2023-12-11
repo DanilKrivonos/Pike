@@ -89,6 +89,27 @@ def medaka_run(output, barcode, threads=1):
         command = f'medaka_consensus -t {threads} -i {reads} -d {protoconsensus} -o {out_dir}'
         call(command, shell=True)
 
+def trim_N(seq, limit=0.1):
+    
+    cut_start = 0
+    cut_end = len(seq)
+    
+    for idx in range(len(seq)):
+        if seq[idx] == 'N':
+            if idx <= len(seq) * limit:
+            
+                cut_start = idx
+    
+        if seq[idx] == 'N':
+            if idx >= len(seq)*(1-limit):
+                
+                cut_end = idx
+                break
+    
+    trimmed_seq = seq[cut_start + 1: cut_end]
+    
+    return trimmed_seq
+
 def prepare_output(output, barcode):
     
     otu_dict = {}
@@ -100,6 +121,7 @@ def prepare_output(output, barcode):
         for line in opn_consensus:
             
             otu = str(line.seq)
+            otu = trim_N(otu)
             otu_count = int(line.id.split('_')[-1])
             
             if otu not in otu_dict.keys():
