@@ -15,6 +15,7 @@ from src.get_visualization import get_visualisation
 from src.get_filtered_clusters import filter_cluster
 from src.get_good_reads import run_trimming, run_filtering
 from src.get_consensus import get_msa_info, get_consensus, medaka_run, prepare_output
+import tensorflow as tf
 
 def create_dirs(output, 
                 barcode):
@@ -90,18 +91,19 @@ def run_barcodes(interval,
         normalize = lambda x: x / np.sum(x)
         K_MERS_FREQ = np.array(list(map(normalize, K_MERS_FREQ)))
         clr_data = clr(K_MERS_FREQ)
-        pca_model = PCA(n_components=30,
+        import scipy
+        #clr_data = clr_data
+        pca_model = PCA(n_components=15,
                         random_state=0)
         pca_data = pca_model.fit_transform(clr_data)
        # umap_model = UMAP(n_components=2,
-       #                 n_neighbors=umap_neighbours,
-       #                 min_dist=0.01,
-       #                 metric='braycurtis',
-       #                 random_state=0)
+       #                  n_neighbors=umap_neighbours,
+       #                  min_dist=0.01,
+       #                  metric='euclidean',
+       #                  random_state=0)
         umap_model = ParametricUMAP(n_components=2)
         umap_dat = umap_model.fit_transform(pca_data)
         #_______________________________________________________________________________________________________________________________
-        print(umap_dat.shape)
         RESULT_DICT = {'Read ID' : READ_ID,
                         'BARCODE' : BARCODE_ID, 
                         '1 UMAP COMPONENT' : umap_dat[:, 0], 
@@ -116,9 +118,9 @@ def run_barcodes(interval,
 
         #___Cluster identification________________________________________________________________________________________________________
         hdbscan = HDBSCAN(min_cluster_size=hdbscan_neighbours,
-                        cluster_selection_epsilon=0.01, 
+                        cluster_selection_epsilon=0.1, 
                         gen_min_span_tree=True,
-                        metric='braycurtis')
+                        metric='euclidean')
         clusters = hdbscan.fit_predict(umap_dat)
         RESULT_DF['Clusters'] = clusters
         #_______________________________________________________________________________________________________________________________

@@ -2,8 +2,10 @@ import os
 from os import listdir
 import numpy as np
 from umap import UMAP
+from umap.parametric_umap import ParametricUMAP
 from hdbscan import HDBSCAN
 from subprocess import call
+from skbio.stats.composition import clr
 from sklearn.decomposition import PCA
 from pandas import DataFrame, read_csv
 from Bio.SeqIO import parse
@@ -76,7 +78,7 @@ def collect_pool_features(interval,
                               'READ_Seq' : READ_Seq, 
                               'GC content' : GC_CONTENT,
                               'QUALITY' : QUALITY,
-                              'K-mers signature' : K_MERS_FREQ})
+                              'K-mers signature' : list(K_MERS_FREQ)})
 
         save_tsv.to_csv(f'{output}/work_dir/features/{barcode}.tsv', sep='\t')
 
@@ -145,15 +147,23 @@ def run_pool(output,
         
     print('    C L U S T E R I N G   S T A G E    ')
     print('=======================================')
+    K_MERS_FREQ = np.array(K_MERS_FREQ)
+    idx = np.argwhere(np.all(K_MERS_FREQ[..., :] == 0, axis=0))
+    K_MERS_FREQ = np.delete(K_MERS_FREQ, idx, axis=1)
+    K_MERS_FREQ += 1
+    normalize = lambda x: x / np.sum(x)
+    K_MERS_FREQ = np.array(list(map(normalize, K_MERS_FREQ)))
+    clr_data = clr(K_MERS_FREQ)
 
-    pca_model = PCA(n_components=30,
+    pca_model = PCA(n_components=15,
                     random_state=0)
-    pca_data = pca_model.fit_transform(K_MERS_FREQ)
-    umap_model = UMAP(n_components=2,
-                        n_neighbors=umap_neighbours,
-                        min_dist=0.01,
-                        metric='braycurtis',
-                        random_state=0)
+    pca_data = pca_model.fit_transform(clr_data)
+    # umap_model = UMAP(n_components=2,
+    #                  n_neighbors=umap_neighbours,
+    #                  min_dist=0.01,
+    #                  metric='euclidean',
+    #                  random_state=0)
+    umap_model = ParametricUMAP(n_components=2)
     umap_dat = umap_model.fit_transform(pca_data)
     #_______________________________________________________________________________________________________________________________
     
@@ -166,7 +176,7 @@ def run_pool(output,
                     'READ_Seq' : READ_Seq, 
                     'GC content' : GC_CONTENT,
                     'QUALITY' : QUALITY,
-                    'K-mers signature' : K_MERS_FREQ}
+                    'K-mers signature' : list(K_MERS_FREQ)}
     RESULT_DF = DataFrame(RESULT_DICT) #All information mearged in df
 
     #___Cluster identification________________________________________________________________________________________________________

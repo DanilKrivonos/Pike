@@ -11,12 +11,12 @@ def run_trimming(path_to_fastq,
     command_input1 = f'{path_to_fastq}/{sample}.fastq'
     command_output1 = f'{output}/read_preprocessing/cutadapt_round1/{sample}.fastq'    
 #    command1 = f'cutadapt -g ^{primerF} --minimum-length 20 --rc --discard-untrimmed -e 0.3 --quiet  -o {command_output1} {command_input1}'#add paramerts 
-    command1 = f'cutadapt -g ^{primerF} --minimum-length 20 --rc -e 0.3 --discard-untrimmed --quiet  -o {command_output1} {command_input1}'#add paramerts 
+    command1 = f'cutadapt -g ^{primerF} --minimum-length 20 --rc -e 0.3 --quiet  -o {command_output1} {command_input1}'#add paramerts 
     call(command1, shell=True)
     #Trimming round 2
     command_input2 = f'{output}/read_preprocessing/cutadapt_round1/{sample}.fastq'
     command_output2 = f'{output}/read_preprocessing/cutadapt_round2/{sample}.fastq'#--quality-base 20
-    command2 = f'cutadapt -g ^{primerR}  --minimum-length 20 --rc -e 0.3 --discard-untrimmed --quiet -o {command_output2} {command_input2}'
+    command2 = f'cutadapt -g ^{primerR}  --minimum-length 20 --rc -e 0.3 --quiet -o {command_output2} {command_input2}'
     call(command2, shell=True)
     #new path to preprocessed fastq
     goodreads = f'{output}/read_preprocessing/cutadapt_round2/'

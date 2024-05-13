@@ -5,6 +5,9 @@ import numpy as np
 from os import listdir, mkdir
 from subprocess import call
 from src.get_cluster import miltiprocess_analyze
+from src.get_merge import merge_output
+import os
+#import tensorflow as tf
 
 def main():
 
@@ -71,15 +74,15 @@ def main():
     group4.add_argument('-umap_neighbours',
                         type=int,
                         help='Number of nearest neighbors for UMAP (30 by default)',
-                        default=30)
+                        default=10)
     group4.add_argument('-cluster_size',
                         type=int,
                         help='Number of dots for HDBSCAN (30 by default)',
-                        default=30)
+                        default=10)
     group4.add_argument('-k',
                         type=int,
                         help='k-mer size number (6 by default)',
-                        default=6)
+                        default=5)
     group4.add_argument('--visualize', 
                         help='Create clustering figure (false by default)',
                         default=False,
@@ -152,6 +155,10 @@ def main():
 
     os.mkdir(f'{output}/read_preprocessing/filtered_reads')    
 
+    import tensorflow as tf
+    tf.config.threading.set_intra_op_parallelism_threads(32) #Add in git 
+   
+
     print('                      R U N   A N A L Y S I S                      ')
     print('===================================================================')
 
@@ -173,7 +180,13 @@ def main():
                          consensus_seq_lim,
                          letter_Q_lim)
     
+    print('                    O U T P U T   M E R G I N G                    ')
+    print('===================================================================')
+    
+    merge_output(output)
+
     print('Your results are ready!')
+    
     print('Thank you for using PIKE.')
     print('If you find a bug, please report it in a Git issues or contact by email.')
 
