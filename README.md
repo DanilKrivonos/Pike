@@ -11,6 +11,8 @@ Pike is a tool for analyzing noisy reads. The algorithm is based on the clusteri
 - hdbscan
 - medaka
 - mafft
+- cutadapt
+- filtlong
 
 ## **Installation:**
 
@@ -45,7 +47,7 @@ clustering arguments:
                         Number of nearest neighbors for UMAP (30 by default)
   -cluster_size CLUSTER_SIZE
                         Number of dots for HDBSCAN (30 by default)
-  --visualize           Create clustering figure (false by default)
+  -k K                  k-mer size number (6 by default)
 
 consensus building arguments:
   -consensus_seq_lim CONSENSUS_SEQ_LIM
