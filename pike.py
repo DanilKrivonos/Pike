@@ -82,11 +82,7 @@ def main():
     group4.add_argument('-k',
                         type=int,
                         help='k-mer size number (6 by default)',
-                        default=5)
-    group4.add_argument('--visualize', 
-                        help='Create clustering figure (false by default)',
-                        default=False,
-                        action='store_true')
+                        default=6)
     #_________________________________________________________________
     #______________________Consensus parametrs________________________
     group5.add_argument('-consensus_seq_lim',
@@ -98,7 +94,7 @@ def main():
                         help='The minimum quality of the consensus letter. If the quality is less, then N is set (15 by default)',
                         default=15)
     #_________________________________________________________________
-
+    
     if len(sys.argv)==1:
         parser.print_help(sys.stderr)
         sys.exit(1)
@@ -126,7 +122,6 @@ def main():
     umap_neighbours = args.umap_neighbours
     hdbscan_neighbours = args.cluster_size
     k = args.k
-    visualize = args.visualize
     #____Consensus parametrs__________________
     #__________________________________________
     consensus_seq_lim = args.consensus_seq_lim
@@ -158,7 +153,6 @@ def main():
     import tensorflow as tf
     tf.config.threading.set_intra_op_parallelism_threads(32) #Add in git 
    
-
     print('                      R U N   A N A L Y S I S                      ')
     print('===================================================================')
 
@@ -176,14 +170,13 @@ def main():
                          umap_neighbours,
                          hdbscan_neighbours,
                          k,
-                         visualize,
                          consensus_seq_lim,
                          letter_Q_lim)
     
     print('                    O U T P U T   M E R G I N G                    ')
     print('===================================================================')
     
-    merge_output(output)
+    merge_output(output, mode)
 
     print('Your results are ready!')
     

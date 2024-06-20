@@ -1,4 +1,5 @@
 import os
+import pickle
 from os import listdir
 import numpy as np
 from umap import UMAP
@@ -11,15 +12,17 @@ from pandas import DataFrame, read_csv
 from Bio.SeqIO import parse
 from Bio.SeqRecord import SeqRecord
 from src.get_features import collect_features
-from src.get_visualization import get_visualisation
 from src.get_filtered_clusters import filter_cluster
 from src.get_consensus import get_msa_info, get_consensus, medaka_run
 from src.get_good_reads import run_trimming, run_filtering
+from scipy.sparse import vstack, csr_matrix
 
 def create_pool_dirs(output):
 
     #workdir dir bases
     os.mkdir(f'{output}/work_dir/features')
+    os.mkdir(f'{output}/work_dir/features/tsv')
+    os.mkdir(f'{output}/work_dir/features/sparse')
     os.mkdir(f'{output}/work_dir/proto_consensus')
     os.mkdir(f'{output}/work_dir/clusters_data_fastq')
     os.mkdir(f'{output}/work_dir/clusters_data_fasta')
@@ -77,10 +80,14 @@ def collect_pool_features(interval,
                               'READ_Q' : READ_Q,
                               'READ_Seq' : READ_Seq, 
                               'GC content' : GC_CONTENT,
-                              'QUALITY' : QUALITY,
-                              'K-mers signature' : list(K_MERS_FREQ)})
+                              'QUALITY' : QUALITY})#,
+                              #'K-mers signature' : list(K_MERS_FREQ)})
+        
+        with open(f'{output}/work_dir/features/sparse/K_MERS_FREQ_{barcode}.obj', 'wb') as fp:
 
-        save_tsv.to_csv(f'{output}/work_dir/features/{barcode}.tsv', sep='\t')
+            pickle.dump(K_MERS_FREQ, fp)
+
+        save_tsv.to_csv(f'{output}/work_dir/features/tsv/{barcode}.tsv', sep='\t')
 
 def demultiplex_results(output):
         
@@ -117,7 +124,6 @@ def run_pool(output,
              threads,
              umap_neighbours,
              hdbscan_neighbours,
-             visualize,
              consensus_seq_lim,
              letter_Q_lim):
     
@@ -130,11 +136,17 @@ def run_pool(output,
     QUALITY = []
     BARCODE_ID = []
     #Barcodes features mearging
-    for barcode_tsv in listdir(f'{output}/work_dir/features/'):
+    for barcode_tsv in listdir(f'{output}/work_dir/features/tsv'):
 
-        opn_barcode_features = read_csv(f'{output}/work_dir/features/{barcode_tsv}', sep='\t', index_col=0)
+        opn_barcode_features = read_csv(f'{output}/work_dir/features/tsv/{barcode_tsv}', sep='\t', index_col=0)
+        barcode = barcode_tsv.split('.')[0]
+
+        with open(f'{output}/work_dir/features/sparse/K_MERS_FREQ_{barcode}.obj', 'rb') as fp:
+            
+            K_MERS_FREQ_barcode = pickle.load(fp)
         
-        K_MERS_FREQ.extend([eval(read) for read in opn_barcode_features['K-mers signature'].values])
+
+        K_MERS_FREQ.append(K_MERS_FREQ_barcode)
         GC_CONTENT.extend(list(opn_barcode_features['GC content'].values))
         READ_Q.extend(list(opn_barcode_features['READ_Q'].values))
         READ_Seq.extend(list(opn_barcode_features['READ_Seq'].values))
@@ -143,20 +155,22 @@ def run_pool(output,
         QUALITY.extend(list(opn_barcode_features['QUALITY'].values))
         BARCODE_ID.extend(list(opn_barcode_features['BARCODE'].values))
 
+    K_MERS_FREQ = vstack(K_MERS_FREQ)
+    print(K_MERS_FREQ.A.shape)
     #___Staged decomposition_________________________________________________________________________________________________________
         
     print('    C L U S T E R I N G   S T A G E    ')
     print('=======================================')
-    K_MERS_FREQ = np.array(K_MERS_FREQ)
-    idx = np.argwhere(np.all(K_MERS_FREQ[..., :] == 0, axis=0))
-    K_MERS_FREQ = np.delete(K_MERS_FREQ, idx, axis=1)
-    K_MERS_FREQ += 1
-    normalize = lambda x: x / np.sum(x)
-    K_MERS_FREQ = np.array(list(map(normalize, K_MERS_FREQ)))
-    clr_data = clr(K_MERS_FREQ)
-
+    #K_MERS_FREQ = np.array(K_MERS_FREQ)
+    #idx = np.argwhere(np.all(K_MERS_FREQ[..., :] == 0, axis=0))
+    #K_MERS_FREQ = np.delete(K_MERS_FREQ, idx, axis=1)
+    #K_MERS_FREQ += 1
+    #normalize = lambda x: x / np.sum(x)
+    #K_MERS_FREQ = np.array(list(map(normalize, K_MERS_FREQ)))
+    clr_data = csr_matrix(clr(K_MERS_FREQ.A))#clr_data = clr(K_MERS_FREQ)
+    
     pca_model = PCA(n_components=15,
-                    random_state=0)
+                    random_state=0, svd_solver='arpack')
     pca_data = pca_model.fit_transform(clr_data)
     # umap_model = UMAP(n_components=2,
     #                  n_neighbors=umap_neighbours,
@@ -175,8 +189,8 @@ def run_pool(output,
                     'READ_Q' : READ_Q,
                     'READ_Seq' : READ_Seq, 
                     'GC content' : GC_CONTENT,
-                    'QUALITY' : QUALITY,
-                    'K-mers signature' : list(K_MERS_FREQ)}
+                    'QUALITY' : QUALITY}#,
+                    #'K-mers signature' : list(K_MERS_FREQ)}
     RESULT_DF = DataFrame(RESULT_DICT) #All information mearged in df
 
     #___Cluster identification________________________________________________________________________________________________________
@@ -239,11 +253,6 @@ def run_pool(output,
             protocons.write(f'>clt_{clt}_{len(clt_dat)}\n{protoconsensus}\n') #Recording a protoconsensus    
         #_______________________________________________________________________________________________________________________________
 
-        #_______Building visualization of clustering___________________________________________________________________________________
-        
-        if visualize == True:
-            
-            get_visualisation(output, '/', filtered_add)
     #_______________________________________________________________________________________________________________________________
     
     print('    P O L I S H   C O N S E N S U S    ')

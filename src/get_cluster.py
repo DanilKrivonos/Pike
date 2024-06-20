@@ -11,11 +11,11 @@ from multiprocessing import Process
 from sklearn.decomposition import PCA
 from src.get_pool import create_pool_dirs, collect_pool_features, run_pool
 from src.get_features import collect_features
-from src.get_visualization import get_visualisation
 from src.get_filtered_clusters import filter_cluster
 from src.get_good_reads import run_trimming, run_filtering
 from src.get_consensus import get_msa_info, get_consensus, medaka_run, prepare_output
 import tensorflow as tf
+from scipy.sparse import csr_matrix
 
 def create_dirs(output, 
                 barcode):
@@ -42,7 +42,6 @@ def run_barcodes(interval,
                  umap_neighbours,
                  hdbscan_neighbours,
                  k,
-                 visualize,
                  consensus_seq_lim,
                  letter_Q_lim):
                     
@@ -80,21 +79,21 @@ def run_barcodes(interval,
                                                                                             usereads,
                                                                                             k, 
                                                                                             read_q_score) #Features collection
-                    
         #___Staged decomposition_________________________________________________________________________________________________________
         print(f' C L U S T E R I N G   S T A G E   F O R          :   {barcode} ')
         print('===================================================================')
-        K_MERS_FREQ = np.array(K_MERS_FREQ)
-        idx = np.argwhere(np.all(K_MERS_FREQ[..., :] == 0, axis=0))
-        K_MERS_FREQ = np.delete(K_MERS_FREQ, idx, axis=1)
-        K_MERS_FREQ += 1
-        normalize = lambda x: x / np.sum(x)
-        K_MERS_FREQ = np.array(list(map(normalize, K_MERS_FREQ)))
-        clr_data = clr(K_MERS_FREQ)
+        #K_MERS_FREQ = np.array(K_MERS_FREQ)
+        #idx = np.argwhere(np.all(K_MERS_FREQ[..., :] == 0, axis=0))
+        #K_MERS_FREQ = np.delete(K_MERS_FREQ, idx, axis=1)
+        #K_MERS_FREQ += 1
+        #normalize = lambda x: x / np.sum(x)
+        #K_MERS_FREQ = np.array(list(map(normalize, K_MERS_FREQ)))
+        clr_data = csr_matrix(clr(K_MERS_FREQ.A))
+        #print(K_MERS_FREQ.shape)
         import scipy
         #clr_data = clr_data
         pca_model = PCA(n_components=15,
-                        random_state=0)
+                        random_state=0, svd_solver='arpack')
         pca_data = pca_model.fit_transform(clr_data)
        # umap_model = UMAP(n_components=2,
        #                  n_neighbors=umap_neighbours,
@@ -112,8 +111,8 @@ def run_barcodes(interval,
                         'READ_Q' : READ_Q,
                         'READ_Seq' : READ_Seq, 
                         'GC content' : GC_CONTENT,
-                        'QUALITY' : QUALITY,
-                        'K-mers signature' : list(K_MERS_FREQ)}
+                        'QUALITY' : QUALITY}#,
+                        #'K-mers signature' : list(K_MERS_FREQ)}
         RESULT_DF = DataFrame(RESULT_DICT) #All information mearged in df
 
         #___Cluster identification________________________________________________________________________________________________________
@@ -176,11 +175,6 @@ def run_barcodes(interval,
                 protocons.write(f'>clt_{clt}_{len(clt_dat)}\n{protoconsensus}\n') #Recording a protoconsensus    
             #_______________________________________________________________________________________________________________________________
 
-            #_______Building visualization of clustering___________________________________________________________________________________
-            
-            if visualize == True:
-                
-                get_visualisation(output, barcode, filtered_add)
         #_______________________________________________________________________________________________________________________________
         print(f' P O L I S H   C O N S E N S U S    F O R         :   {barcode} ')
         print('===================================================================')
@@ -209,7 +203,6 @@ def miltiprocess_analyze(path_to_fastq,
                          umap_neighbours,
                          hdbscan_neighbours,
                          k,
-                         visualize,
                          consensus_seq_lim,
                          letter_Q_lim):
         
@@ -235,7 +228,6 @@ def miltiprocess_analyze(path_to_fastq,
                               umap_neighbours,
                               hdbscan_neighbours,
                               k,
-                              visualize,
                               consensus_seq_lim,
                               letter_Q_lim))
             proc.daemon = True
@@ -272,7 +264,6 @@ def miltiprocess_analyze(path_to_fastq,
                  threads,
                  umap_neighbours,
                  hdbscan_neighbours,
-                 visualize,
                  consensus_seq_lim,
                  letter_Q_lim)
         
