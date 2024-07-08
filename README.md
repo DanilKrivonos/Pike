@@ -3,16 +3,18 @@ Pike is a tool for analyzing noisy reads. The algorithm is based on the clusteri
 
 
 ## **Dependencies:**
-- pandas
-- biopython
-- numpy
-- sklearn
-- umap-learn
-- hdbscan
-- medaka
+- numpy>=1.22.4
+- scikit-bio>=0.5.9
+- biopython>=1.83
+- pandas>=2.2.0
+- scipy=1.10.1
+- scikit-learn>=1.4.1
+- hdbscan>=0.8.33
+- umap-learn>=0.5.5
+- medaka=1.11.3
 - mafft
-- cutadapt
-- filtlong
+- cutadapt=4.6
+- filtlong=0.2.1
 
 ## **Installation:**
 

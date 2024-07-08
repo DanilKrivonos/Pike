@@ -94,30 +94,61 @@ def demultiplex_results(output):
     print('  O U T P U T   P R E P A R A T I O N  ')
     print('=======================================')
 
-    otu_decoder = {}
-    good_clt_list = []
+ #   otu_decoder = {}
+#    good_clt_list = []
 
-    for clt in listdir(f'{output}/work_dir/medaka/'):
+ #   for clt in listdir(f'{output}/work_dir/medaka/'):
+#
+ #       good_clt_list.append(int(clt))
+ #       opn_consensus = parse(f'{output}/work_dir/medaka/{clt}/consensus.fasta', 'fasta')
 
-        good_clt_list.append(int(clt))
-        opn_consensus = parse(f'{output}/work_dir/medaka/{clt}/consensus.fasta', 'fasta')
-
-        for line in opn_consensus:
+  #      for line in opn_consensus:
             
-            otu_decoder[int(clt)] = line.seq
+ #           otu_decoder[int(clt)] = line.seq
     
     metadata_df = read_csv(f'{output}/work_dir/metadata_df.tsv', sep='\t', index_col=0)
-    metadata_df = metadata_df.loc[metadata_df['Clusters'].isin(good_clt_list)]
+    #metadata_df = metadata_df.loc[metadata_df['Clusters'].isin(good_clt_list)]
 
-    for barcode in metadata_df['BARCODE'].unique():
+    merged_otu_table = {}
 
+    for otu in listdir(f'{output}/work_dir/medaka/'):
+        
+        subset = metadata_df[metadata_df.Clusters == int(otu)]
+        opn_seq = parse(f'{output}/work_dir/medaka/{otu}/consensus.fasta', 'fasta')
+
+        for line in opn_seq:
+            cons = str(line.seq)
+            
+        if cons not in merged_otu_table.keys():
+            
+            merged_otu_table[cons] = {samp : 0 for samp in metadata_df.BARCODE.unique()}
+            
+
+        
+        for samp in subset.value_counts('BARCODE').to_dict():
+            merged_otu_table[cons][samp] += subset.value_counts('BARCODE')[samp]
+        
+    
+    merged_otu_table = DataFrame(merged_otu_table).T
+    
+    for barcode in merged_otu_table.columns:
         os.mkdir(f'{output}/results/{barcode}')
+        subset = merged_otu_table[barcode][merged_otu_table[barcode] != 0]
+        DataFrame(index=subset.index, columns=['Count'], data=subset.values).to_csv(f'{output}/results/{barcode}/results.tsv', sep='\t')
 
-        barcode_df = metadata_df[metadata_df['BARCODE'] == barcode]
-        representation = barcode_df.value_counts('Clusters').to_dict()
-        barcode_results_dict = {otu_decoder[clt] : {'Count' : representation[clt]} for clt in representation.keys()}
-        barcode_results = DataFrame(barcode_results_dict).T
-        barcode_results.to_csv(f'{output}/results/{barcode}/results.tsv', sep='\t')
+    print('                    O U T P U T   M E R G I N G                    ')
+    print('===================================================================')    
+    merged_otu_table.T.to_csv(f'{output}/merged_otu_table.tsv', sep='\t')
+  #  for barcode in metadata_df['BARCODE'].unique():
+
+   #     os.mkdir(f'{output}/results/{barcode}')
+
+  #      barcode_df = metadata_df[metadata_df['BARCODE'] == barcode]
+  #      representation = barcode_df.value_counts('Clusters').to_dict()
+
+  #      barcode_results_dict = {otu_decoder[clt] : {'Count' : representation[clt]} for clt in representation.keys()}
+  #      barcode_results = DataFrame(barcode_results_dict).T
+   #     barcode_results.to_csv(f'{output}/results/{barcode}/results.tsv', sep='\t')
 
 
 def run_pool(output,
@@ -139,7 +170,7 @@ def run_pool(output,
     for barcode_tsv in listdir(f'{output}/work_dir/features/tsv'):
 
         opn_barcode_features = read_csv(f'{output}/work_dir/features/tsv/{barcode_tsv}', sep='\t', index_col=0)
-        barcode = barcode_tsv.split('.')[0]
+        barcode = '.'.join(barcode_tsv.split('.')[:-1])
 
         with open(f'{output}/work_dir/features/sparse/K_MERS_FREQ_{barcode}.obj', 'rb') as fp:
             

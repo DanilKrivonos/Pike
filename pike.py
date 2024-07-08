@@ -172,11 +172,12 @@ def main():
                          k,
                          consensus_seq_lim,
                          letter_Q_lim)
-    
-    print('                    O U T P U T   M E R G I N G                    ')
-    print('===================================================================')
-    
-    merge_output(output, mode)
+    if mode == 'single':
+
+        print('                    O U T P U T   M E R G I N G                    ')
+        print('===================================================================')
+        
+        merge_output(output, mode)
 
     print('Your results are ready!')
     

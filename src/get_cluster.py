@@ -14,7 +14,6 @@ from src.get_features import collect_features
 from src.get_filtered_clusters import filter_cluster
 from src.get_good_reads import run_trimming, run_filtering
 from src.get_consensus import get_msa_info, get_consensus, medaka_run, prepare_output
-import tensorflow as tf
 from scipy.sparse import csr_matrix
 
 def create_dirs(output, 
