@@ -225,10 +225,11 @@ def run_pool(output,
     RESULT_DF = DataFrame(RESULT_DICT) #All information mearged in df
 
     #___Cluster identification________________________________________________________________________________________________________
+
     hdbscan = HDBSCAN(min_cluster_size=hdbscan_neighbours,
-                        cluster_selection_epsilon=0.01, 
+                        cluster_selection_epsilon=0.1, 
                         gen_min_span_tree=True,
-                        metric='braycurtis')
+                        metric='euclidean')
     clusters = hdbscan.fit_predict(umap_dat)
     RESULT_DF['Clusters'] = clusters
     #_______________________________________________________________________________________________________________________________
