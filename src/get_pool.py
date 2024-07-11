@@ -80,12 +80,12 @@ def collect_pool_features(interval,
                               'READ_Q' : READ_Q,
                               'READ_Seq' : READ_Seq, 
                               'GC content' : GC_CONTENT,
-                              'QUALITY' : QUALITY})#,
-                              #'K-mers signature' : list(K_MERS_FREQ)})
+                              'QUALITY' : QUALITY,
+                              'K-mers signature' : list(K_MERS_FREQ)})
         
-        with open(f'{output}/work_dir/features/sparse/K_MERS_FREQ_{barcode}.obj', 'wb') as fp:
+        #with open(f'{output}/work_dir/features/sparse/K_MERS_FREQ_{barcode}.obj', 'wb') as fp:
 
-            pickle.dump(K_MERS_FREQ, fp)
+        #    pickle.dump(K_MERS_FREQ, fp)
 
         save_tsv.to_csv(f'{output}/work_dir/features/tsv/{barcode}.tsv', sep='\t')
 
@@ -172,12 +172,13 @@ def run_pool(output,
         opn_barcode_features = read_csv(f'{output}/work_dir/features/tsv/{barcode_tsv}', sep='\t', index_col=0)
         barcode = '.'.join(barcode_tsv.split('.')[:-1])
 
-        with open(f'{output}/work_dir/features/sparse/K_MERS_FREQ_{barcode}.obj', 'rb') as fp:
+    #    with open(f'{output}/work_dir/features/sparse/K_MERS_FREQ_{barcode}.obj', 'rb') as fp:
             
-            K_MERS_FREQ_barcode = pickle.load(fp)
+    #        K_MERS_FREQ_barcode = pickle.load(fp)
         
 
-        K_MERS_FREQ.append(K_MERS_FREQ_barcode)
+#        K_MERS_FREQ.append(K_MERS_FREQ_barcode)
+        K_MERS_FREQ.extend([eval(read) for read in opn_barcode_features['K-mers signature'].values])
         GC_CONTENT.extend(list(opn_barcode_features['GC content'].values))
         READ_Q.extend(list(opn_barcode_features['READ_Q'].values))
         READ_Seq.extend(list(opn_barcode_features['READ_Seq'].values))
@@ -186,22 +187,23 @@ def run_pool(output,
         QUALITY.extend(list(opn_barcode_features['QUALITY'].values))
         BARCODE_ID.extend(list(opn_barcode_features['BARCODE'].values))
 
-    K_MERS_FREQ = vstack(K_MERS_FREQ)
-    print(K_MERS_FREQ.A.shape)
+  #  K_MERS_FREQ = vstack(K_MERS_FREQ)
+   # print(K_MERS_FREQ.A.shape)
     #___Staged decomposition_________________________________________________________________________________________________________
-        
+    #print(K_MERS_FREQ)
     print('    C L U S T E R I N G   S T A G E    ')
     print('=======================================')
-    #K_MERS_FREQ = np.array(K_MERS_FREQ)
-    #idx = np.argwhere(np.all(K_MERS_FREQ[..., :] == 0, axis=0))
-    #K_MERS_FREQ = np.delete(K_MERS_FREQ, idx, axis=1)
-    #K_MERS_FREQ += 1
-    #normalize = lambda x: x / np.sum(x)
-    #K_MERS_FREQ = np.array(list(map(normalize, K_MERS_FREQ)))
-    clr_data = csr_matrix(clr(K_MERS_FREQ.A))#clr_data = clr(K_MERS_FREQ)
+    K_MERS_FREQ = np.array(K_MERS_FREQ)
+    idx = np.argwhere(np.all(K_MERS_FREQ[..., :] == 0, axis=0))
+    K_MERS_FREQ = np.delete(K_MERS_FREQ, idx, axis=1)
+    K_MERS_FREQ += 1
+    normalize = lambda x: x / np.sum(x)
+    K_MERS_FREQ = np.array(list(map(normalize, K_MERS_FREQ)))
+    #clr_data = csr_matrix(clr(K_MERS_FREQ.A))#
+    clr_data = clr(K_MERS_FREQ)
     
     pca_model = PCA(n_components=15,
-                    random_state=0, svd_solver='arpack')
+                    random_state=0)#, svd_solver='arpack')
     pca_data = pca_model.fit_transform(clr_data)
     # umap_model = UMAP(n_components=2,
     #                  n_neighbors=umap_neighbours,
@@ -227,9 +229,9 @@ def run_pool(output,
     #___Cluster identification________________________________________________________________________________________________________
 
     hdbscan = HDBSCAN(min_cluster_size=hdbscan_neighbours,
-                        cluster_selection_epsilon=0.1, 
-                        gen_min_span_tree=True,
-                        metric='euclidean')
+                      cluster_selection_epsilon=0.1, 
+                      gen_min_span_tree=True,
+                      metric='euclidean')
     clusters = hdbscan.fit_predict(umap_dat)
     RESULT_DF['Clusters'] = clusters
     #_______________________________________________________________________________________________________________________________

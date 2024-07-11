@@ -41,7 +41,7 @@ def main():
                         default=np.inf)
     group2.add_argument('-threads', 
                         type=int,
-                        help='Number of threads',
+                        help='Number of threads (1 by default)',
                         default=1)
     #__________________________________________________________________
     #______________________Read quality options________________________

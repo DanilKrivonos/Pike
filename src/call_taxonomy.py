@@ -18,10 +18,10 @@ def create_fasta(output, mearged_pike_out, dbpath):
     
     return consensus
     
-def run_blast(base, path):
+def run_blast(base, path, threads):
     
     call(f'makeblastdb -in {base} -dbtype nucl', shell=True)
-    call(f'blastn -num_threads 60  -outfmt "7 qseqid sseqid pident evalue qcovs bitscore" -query {path}/all_consensus.fasta  -db {base} -out {path}/blast_results.txt', shell=True)
+    call(f'blastn -num_threads {threads}  -outfmt "7 qseqid sseqid pident evalue qcovs bitscore" -query {path}/all_consensus.fasta  -db {base} -out {path}/blast_results.txt', shell=True)
 
 def decode_tax(base) -> dict:
     
@@ -92,10 +92,11 @@ def parse_blast(path,
 
 def call_taxonomy(output, 
                 dbpath,
-                mearged_pike_out,
+                mearged_pike_out, 
+                threads,
                 identity_filter=95, 
                 cov_lim=60, 
-                evalue_filter=1e-05,):
+                evalue_filter=1e-05):
 
     # Creating output directory
     try:        
@@ -104,7 +105,7 @@ def call_taxonomy(output,
         print('The output directory already exists!')
         
     consensus = create_fasta(output, mearged_pike_out, dbpath)
-    run_blast(dbpath, output)
+    run_blast(dbpath, output, threads)
     data_tax = decode_tax(dbpath)
     blasting_results_df = parse_blast(output, 
                                     dbpath, 

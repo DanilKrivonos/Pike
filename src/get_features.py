@@ -82,11 +82,14 @@ def collect_features(path_to_fastq,
             
         GC_count = str(seq.seq).count('G') + str(seq.seq).count('C')
         
-        kmer_res = np.array(list(get_kmers_signature(seq.seq, k=k).values()))
-        kmer_res += 1
-        kmer_res = kmer_res / np.sum(kmer_res)
+    #    kmer_res = np.array(list(get_kmers_signature(seq.seq, k=k).values()))
+      #  kmer_res += 1
+      #  kmer_res = kmer_res / np.sum(kmer_res)
 
-        K_MERS_FREQ.append(csr_array(kmer_res))
+#        K_MERS_FREQ.append(csr_array(kmer_res))
+        kmer_res = list(get_kmers_signature(seq.seq, k=k).values())
+
+        K_MERS_FREQ.append(kmer_res)
         GC_CONTENT.append(GC_count/ len(seq.seq))
         READ_ID.append(seq.id)
         READ_Seq.append(seq.seq)
@@ -99,7 +102,7 @@ def collect_features(path_to_fastq,
 
     print(f'{np.round((1-Q_have/read_counter)*100)}% or reads was dropped') #Добавить log
     print(f'Will be used {len(K_MERS_FREQ)}')
-    K_MERS_FREQ = vstack(K_MERS_FREQ)
+ #   K_MERS_FREQ = vstack(K_MERS_FREQ)
 
     return K_MERS_FREQ, GC_CONTENT, READ_ID, READ_Seq, READ_Q, LENS, QUALITY, BARCODE_ID
 

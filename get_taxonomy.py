@@ -29,7 +29,10 @@ def main():
                         type=float,
                         help='E-value treshold (default : 1e-05)',
                         default=60)
-    
+    parser.add_argument('-threads',
+                        type=int,
+                        help='Number of threads (default : 4)',
+                        default=4)  
     parser.add_argument('-output',
                         type=str,
                         help='Directory with output files',
@@ -49,14 +52,16 @@ def main():
     cov_lim = args.cov_lim
     eval_lim = args.eval_lim
     output = args.output
+    threads = args.threads
     mearged_pike_out = read_csv(otutab, sep='\t', index_col=0)
 
     tax_table = call_taxonomy(output, 
                              dbpath,
-                             mearged_pike_out.T,
+                             mearged_pike_out.T, 
+                             threads,
                              identity_filter=identity, 
                              cov_lim=cov_lim, 
-                             evalue_filter=eval_lim,)
+                             evalue_filter=eval_lim)
     
     tax_table.to_csv(f'{output}/tax_table.tsv', sep='\t')
 

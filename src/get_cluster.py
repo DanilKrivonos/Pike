@@ -81,18 +81,19 @@ def run_barcodes(interval,
         #___Staged decomposition_________________________________________________________________________________________________________
         print(f' C L U S T E R I N G   S T A G E   F O R          :   {barcode} ')
         print('===================================================================')
-        #K_MERS_FREQ = np.array(K_MERS_FREQ)
-        #idx = np.argwhere(np.all(K_MERS_FREQ[..., :] == 0, axis=0))
-        #K_MERS_FREQ = np.delete(K_MERS_FREQ, idx, axis=1)
-        #K_MERS_FREQ += 1
-        #normalize = lambda x: x / np.sum(x)
-        #K_MERS_FREQ = np.array(list(map(normalize, K_MERS_FREQ)))
-        clr_data = csr_matrix(clr(K_MERS_FREQ.A))
+        K_MERS_FREQ = np.array(K_MERS_FREQ)
+        idx = np.argwhere(np.all(K_MERS_FREQ[..., :] == 0, axis=0))
+        K_MERS_FREQ = np.delete(K_MERS_FREQ, idx, axis=1)
+        K_MERS_FREQ += 1
+        normalize = lambda x: x / np.sum(x)
+        K_MERS_FREQ = np.array(list(map(normalize, K_MERS_FREQ)))
+        clr_data = clr(K_MERS_FREQ)
+        #clr_data = csr_matrix(clr(K_MERS_FREQ.A))
         #print(K_MERS_FREQ.shape)
         import scipy
         #clr_data = clr_data
         pca_model = PCA(n_components=15,
-                        random_state=0, svd_solver='arpack')
+                        random_state=0)#, svd_solver='arpack')
         pca_data = pca_model.fit_transform(clr_data)
        # umap_model = UMAP(n_components=2,
        #                  n_neighbors=umap_neighbours,
