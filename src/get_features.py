@@ -28,6 +28,7 @@ def get_kmers_signature(seq, k=6):
   #  end = k
     reverse_seq = compress_read(seq.reverse_complement())
     forward_seq = compress_read(seq)
+    
     #limit = len(forward_seq) - 1
 
     for start in  range(len(forward_seq) - k):
