@@ -21,6 +21,11 @@ The analysis is possible in two different versions. Single mode allows you to pr
 - filtlong=0.2.1
 
 ## **Installation:**
+```
+conda create -n pike_env -c bioconda medaka=1.11.3 cutadapt=4.6 filtlong=0.2.1
+conda activate pike_env
+pip install pike-meta
+```
 
 ## **Ussages:**
 ### Parameters
