@@ -1,5 +1,5 @@
 # Pike: tool for Oxford Nanopore amplicon metagenomics 
-<img src="https://github.com/user-attachments/assets/29645cde-75f8-43b1-ae00-8275f549e720" width="120" height="120" align="left">
+<img src="https://github.com/user-attachments/assets/29645cde-75f8-43b1-ae00-8275f549e720" width="150" height="150" align="left">
 Pike is a tool for analyzing amplicon nanowire sequencing data. Pike is capable of analyzing reads of varying amplicrone sizes. Pike is based on sequential clustering of reads followed by reaching consensus amplicon variants. Validation of the approach The developed algorithm was validated using equimolar bacterial and fungal compositions of amplicons of various sizes.
 
 ![image](https://github.com/user-attachments/assets/c3db7a84-00c5-4a4f-8274-e947489a6402)
