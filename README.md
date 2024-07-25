@@ -1,5 +1,5 @@
 # Pike: metagenomic tool for noisy reads analyzing
-<img src="https://github.com/user-attachments/assets/29645cde-75f8-43b1-ae00-8275f549e720" width="200" height="200" align="left">
+<img src="https://github.com/user-attachments/assets/29645cde-75f8-43b1-ae00-8275f549e720" width="150" height="150" align="left">
 Pike is a tool for analyzing noisy reads. The algorithm is based on the clustering of reads with the subsequent construction of their multiple pulling out, as a result of which a consensus sequence is built.
 
 
