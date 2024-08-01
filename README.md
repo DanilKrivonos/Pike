@@ -22,7 +22,7 @@ The analysis is possible in two different versions. Single mode allows you to pr
 
 ## **Installation:**
 ```
-conda create -n pike_env -c bioconda medaka=1.11.3 cutadapt=4.6 filtlong=0.2.1
+conda create -n pike_env -c bioconda -c conda-forge medaka=1.11.3 cutadapt=4.6 filtlong=0.2.1
 conda activate pike_env
 pip install pike-meta
 ```
