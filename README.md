@@ -75,11 +75,15 @@ pike.py -mode single -fastq example_data/ --trim_primer  -primerF CCTACGGGNGGCWG
 ```
 pike.py -mode pool -fastq example_data/ --trim_primer  -primerF CCTACGGGNGGCWGCAG -primerR GACTACHVGGGTATCTAATCC
 ```
-
+### **Taxonomy calling via blastn:**
+```
+get_taxonomy  -otutab Pike_results/merged_otu_table.tsv -output Pike_results/TAXONOMY -db /mnt/iscsidisk1/runs/runs-krivonos/PROJECTS/NANOPORE_PROJECT/ITS_AMPLICON/dada_unite.fasta
+```
 ### Output directory architecture
 
 ```
 .
+├── merged_otu_table.tsv            summary OTU table for all samples
 ├── read_preprocessing              directory with read preprocessing results
 |   ├── cutadapt_round1             directory with cutadapt round 1 results (cut F primer)
 |   ├── cutadapt_round2             directory with cutadapt round 2 results (cut R primer)
