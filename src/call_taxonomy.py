@@ -77,7 +77,7 @@ def parse_blast(path,
         blast_subset = blast_subset[blast_subset['qcovs'] >= cov_lim]
 
         blast_subset = blast_subset.sort_values(by='evalue')
-        blast_subset = blast_subset.sort_values(by='pident')[::-1]
+       # blast_subset = blast_subset.sort_values(by='pident')[::-1]
 
         if len(blast_subset['sseqid'].values) == 0:
             continue
