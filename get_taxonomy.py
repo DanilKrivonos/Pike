@@ -20,15 +20,15 @@ def main():
     parser.add_argument('-identity',
                         type=float,
                         help='Identity treshold (default : 0)',
-                        default=95)
+                        default=0)
     parser.add_argument('-cov_lim',
                         type=float,
                         help='Caverage treshold (default : 0)',
-                        default=60)
+                        default=0)
     parser.add_argument('-eval_lim',
                         type=float,
                         help='E-value treshold (default : 1e-10)',
-                        default=60)
+                        default=1e-10)
     parser.add_argument('-threads',
                         type=int,
                         help='Number of threads (default : 4)',
