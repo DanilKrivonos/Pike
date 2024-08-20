@@ -94,8 +94,8 @@ def call_taxonomy(output,
                 dbpath,
                 mearged_pike_out, 
                 threads,
-                identity_filter=95, 
-                cov_lim=60, 
+                identity_filter=0, 
+                cov_lim=0, 
                 evalue_filter=1e-10):
 
     # Creating output directory
