@@ -77,7 +77,7 @@ pike.py -mode pool -fastq example_data/ --trim_primer  -primerF CCTACGGGNGGCWGCA
 ```
 ### **Taxonomy calling via blastn:**
 ```
-get_taxonomy  -otutab Pike_results/merged_otu_table.tsv -output Pike_results/TAXONOMY -db /mnt/iscsidisk1/runs/runs-krivonos/PROJECTS/NANOPORE_PROJECT/ITS_AMPLICON/dada_unite.fasta
+get_taxonomy  -otutab Pike_results/merged_otu_table.tsv -output Pike_results/TAXONOMY -db /path/to/db.fasta
 ```
 ### Output directory architecture
 
