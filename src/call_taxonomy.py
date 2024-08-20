@@ -96,7 +96,7 @@ def call_taxonomy(output,
                 threads,
                 identity_filter=95, 
                 cov_lim=60, 
-                evalue_filter=1e-05):
+                evalue_filter=1e-10):
 
     # Creating output directory
     try:        
